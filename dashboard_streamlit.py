@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 
 # Leer el CSV
-csv_path = 'backend/datos.csv'
+csv_path = 'datos.csv'
 df = pd.read_csv(csv_path)
 
 st.set_page_config(page_title="Reporte de Rentabilidad y Pacientes", layout="wide")
