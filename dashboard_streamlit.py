@@ -28,13 +28,16 @@ st.markdown("---")
 pacientes_especialidad = df['Especialidad'].value_counts().reset_index()
 pacientes_especialidad.columns = ['Especialidad', 'Cantidad']
 pacientes_especialidad['Porcentaje'] = pacientes_especialidad['Cantidad'] / total_pacientes * 100
-fig1 = px.bar(pacientes_especialidad, y='Especialidad', x='Porcentaje', orientation='h', title='Pacientes por Especialidad (%)', text='Porcentaje', color='Especialidad')
+specialidades_unicas = pacientes_especialidad['Especialidad'].unique()
+color_palette_especialidad = px.colors.qualitative.Plotly
+color_map_especialidad = {esp: color_palette_especialidad[i % len(color_palette_especialidad)] for i, esp in enumerate(specialidades_unicas)}
+fig1 = px.bar(pacientes_especialidad, y='Especialidad', x='Porcentaje', orientation='h', title='Pacientes por Especialidad (%)', text='Porcentaje', color='Especialidad', color_discrete_map=color_map_especialidad)
 fig1.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
 st.plotly_chart(fig1, use_container_width=True)
 
 # Tasa de asistencia por especialidad
 asistencia_especialidad = df.groupby('Especialidad')['Asistió'].apply(lambda x: (x.str.lower() == 'sí').mean() * 100).reset_index(name='Tasa de Asistencia (%)')
-fig2 = px.bar(asistencia_especialidad, y='Especialidad', x='Tasa de Asistencia (%)', orientation='h', title='Tasa de Asistencia por Especialidad (%)', text='Tasa de Asistencia (%)', color='Especialidad')
+fig2 = px.bar(asistencia_especialidad, y='Especialidad', x='Tasa de Asistencia (%)', orientation='h', title='Tasa de Asistencia por Especialidad (%)', text='Tasa de Asistencia (%)', color='Especialidad', color_discrete_map=color_map_especialidad)
 fig2.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
 st.plotly_chart(fig2, use_container_width=True)
 
@@ -42,16 +45,16 @@ st.plotly_chart(fig2, use_container_width=True)
 ingreso_especialidad = df[df['Asistió'].str.lower() == 'sí'].copy()
 ingreso_especialidad['Ingreso'] = ingreso_especialidad['Costo Aproximado'].replace({'[$,]': ''}, regex=True).astype(float)
 ingreso_especialidad = ingreso_especialidad.groupby('Especialidad')['Ingreso'].sum().reset_index()
-fig3 = px.bar(ingreso_especialidad, y='Especialidad', x='Ingreso', orientation='h', title='Ingreso Total por Especialidad', text='Ingreso', color='Especialidad')
+fig3 = px.bar(ingreso_especialidad, y='Especialidad', x='Ingreso', orientation='h', title='Ingreso Total por Especialidad', text='Ingreso', color='Especialidad', color_discrete_map=color_map_especialidad)
 fig3.update_traces(texttemplate='$%{text:,.0f}', textposition='outside')
 st.plotly_chart(fig3, use_container_width=True)
 
-# Top 3 motivos de inasistencia (%)
+# Motivos de inasistencia (%)
 motivos = df[df['Asistió'].str.lower() == 'no']['Motivo de Inasistencia'].value_counts().head(3).reset_index()
 motivos.columns = ['Motivo', 'Cantidad']
 total_inasistencias = motivos['Cantidad'].sum()
 motivos['Porcentaje'] = motivos['Cantidad'] / total_inasistencias * 100 if total_inasistencias else 0
-fig4 = px.scatter(motivos, y='Motivo', x='Porcentaje', title='Top 3 Motivos de Inasistencia (%)', text='Porcentaje', color='Motivo', size='Porcentaje', size_max=40)
+fig4 = px.scatter(motivos, y='Motivo', x='Porcentaje', title='Motivos de Inasistencia (%)', text='Porcentaje', color='Motivo', size='Porcentaje', size_max=40)
 fig4.update_traces(texttemplate='%{text:.1f}%', textposition='middle right', marker=dict(line=dict(width=2, color='DarkSlateGrey')))
 st.plotly_chart(fig4, use_container_width=True)
 
@@ -72,6 +75,6 @@ ingreso_doctor = df[df['Asistió'].str.lower() == 'sí'].copy()
 ingreso_doctor['Ingreso'] = ingreso_doctor['Costo Aproximado'].replace({'[$,]': ''}, regex=True).astype(float)
 ingreso_doctor = ingreso_doctor.groupby('Doctor/a')['Ingreso'].sum().reset_index()
 ingreso_doctor.columns = ['Doctor', 'Ingreso']
-fig6 = px.scatter(ingreso_doctor, y='Doctor', x='Ingreso', title='Ingreso Total por Doctor (USD)', text='Ingreso', color='Doctor', size='Ingreso', size_max=20, color_discrete_map=color_map)
-fig6.update_traces(texttemplate='$%{text:,.0f}', textposition='middle right', marker=dict(line=dict(width=2, color='DarkSlateGrey')))
-st.plotly_chart(fig6, use_container_width=True) 
+fig6 = px.bar(ingreso_doctor, y='Doctor', x='Ingreso', orientation='h', title='Ingreso Total por Doctor (USD)', text='Ingreso', color='Doctor', color_discrete_map=color_map)
+fig6.update_traces(texttemplate='$%{text:,.0f}', textposition='outside')
+st.plotly_chart(fig6, use_container_width=True)
