@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 
-df = pd.read_csv('backend/pages/datos.csv')
+df = pd.read_csv('datos.csv')
 
 # Pacientes por doctor
 df_pacientes = df['Doctor/a'].value_counts().reset_index()
