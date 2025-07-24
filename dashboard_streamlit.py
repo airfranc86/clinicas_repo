@@ -3,28 +3,26 @@ import pandas as pd
 import plotly.express as px
 
 # Leer el CSV
-csv_path = 'datos.csv'
+csv_path = 'backend/datos.csv'
 df = pd.read_csv(csv_path)
 
 st.set_page_config(page_title="Reporte de Rentabilidad y Pacientes", layout="wide")
-st.title("Reporte de Rentabilidad y Pacientes")
+st.markdown('<h1 style="text-align:center; color:#2E86C1; font-size:2.5em;">🦷 CLÍNICA ORALTEAMS 📊</h1>', unsafe_allow_html=True)
 
 # KPIs
 total_pacientes = len(df)
 total_asistencias = df[df['Asistió'].str.lower() == 'sí'].shape[0]
 tasa_asistencia = (total_asistencias / total_pacientes * 100) if total_pacientes else 0
 ingreso_total = df[df['Asistió'].str.lower() == 'sí']['Costo Aproximado'].replace({'[$,]': ''}, regex=True).astype(float).sum()
+pérdida_inasistencia = df[df['Asistió'].str.lower() == 'no']['Costo Aproximado'].replace({'[$,]': ''}, regex=True).astype(float).sum()
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 col1.metric("Total Pacientes", total_pacientes)
 col2.metric("Tasa de Asistencia (%)", f"{tasa_asistencia:.1f}%")
 col3.metric("Ingreso Total", f"$ {ingreso_total:,.2f}")
+col4.metric("Pérdida por Inasistencia", f"$ {pérdida_inasistencia:,.2f}")
 
 st.markdown("---")
-
-# Tabla de pacientes
-st.subheader("Tabla de Pacientes")
-st.dataframe(df, use_container_width=True)
 
 # Pacientes por especialidad (%)
 pacientes_especialidad = df['Especialidad'].value_counts().reset_index()
@@ -53,19 +51,27 @@ motivos = df[df['Asistió'].str.lower() == 'no']['Motivo de Inasistencia'].value
 motivos.columns = ['Motivo', 'Cantidad']
 total_inasistencias = motivos['Cantidad'].sum()
 motivos['Porcentaje'] = motivos['Cantidad'] / total_inasistencias * 100 if total_inasistencias else 0
-fig4 = px.pie(motivos, values='Porcentaje', names='Motivo', title='Top 3 Motivos de Inasistencia (%)', hole=0.4)
+fig4 = px.scatter(motivos, y='Motivo', x='Porcentaje', title='Top 3 Motivos de Inasistencia (%)', text='Porcentaje', color='Motivo', size='Porcentaje', size_max=40)
+fig4.update_traces(texttemplate='%{text:.1f}%', textposition='middle right', marker=dict(line=dict(width=2, color='DarkSlateGrey')))
 st.plotly_chart(fig4, use_container_width=True)
 
 # Pacientes por doctor (%)
 pacientes_doctor = df['Doctor/a'].value_counts().reset_index()
 pacientes_doctor.columns = ['Doctor', 'Cantidad']
 pacientes_doctor['Porcentaje'] = pacientes_doctor['Cantidad'] / total_pacientes * 100
-fig5 = px.bar(pacientes_doctor, y='Doctor', x='Porcentaje', orientation='h', title='Pacientes por Doctor (%)', text='Porcentaje', color='Doctor')
+# Definir colores consistentes para los doctores
+unique_doctors = pacientes_doctor['Doctor'].unique()
+color_palette = px.colors.qualitative.Plotly
+color_map = {doctor: color_palette[i % len(color_palette)] for i, doctor in enumerate(unique_doctors)}
+fig5 = px.bar(pacientes_doctor, y='Doctor', x='Porcentaje', orientation='h', title='Pacientes por Doctor (%)', text='Porcentaje', color='Doctor', color_discrete_map=color_map)
 fig5.update_traces(texttemplate='%{text:.1f}%', textposition='outside')
-st.plotly_chart(fig5, use_container_width=True) 
+st.plotly_chart(fig5, use_container_width=True)
 
-
-# Presiona enter para cerrar el dashboard
-st.write("Presiona enter para cerrar el dashboard")
-# Cerrar el dashboard con enter
-st.stop()
+# Ingreso total por doctor (sin decimales)
+ingreso_doctor = df[df['Asistió'].str.lower() == 'sí'].copy()
+ingreso_doctor['Ingreso'] = ingreso_doctor['Costo Aproximado'].replace({'[$,]': ''}, regex=True).astype(float)
+ingreso_doctor = ingreso_doctor.groupby('Doctor/a')['Ingreso'].sum().reset_index()
+ingreso_doctor.columns = ['Doctor', 'Ingreso']
+fig6 = px.scatter(ingreso_doctor, y='Doctor', x='Ingreso', title='Ingreso Total por Doctor (USD)', text='Ingreso', color='Doctor', size='Ingreso', size_max=20, color_discrete_map=color_map)
+fig6.update_traces(texttemplate='$%{text:,.0f}', textposition='middle right', marker=dict(line=dict(width=2, color='DarkSlateGrey')))
+st.plotly_chart(fig6, use_container_width=True) 
