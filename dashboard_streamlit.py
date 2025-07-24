@@ -7,7 +7,7 @@ st.set_page_config(page_title="Reporte de Rentabilidad y Pacientes", layout="wid
 st.markdown('<h1 style="text-align:center; color:#2E86C1; font-size:2.5em;">🦷 CLÍNICA ORALTEAMS (Métricas) 📊</h1>', unsafe_allow_html=True)
 
 # Leer CSV
-csv_path = 'backend/datos.csv'
+csv_path = 'datos.csv'
 df = pd.read_csv(csv_path)
 
 # ----------------------- KPIs -----------------------
